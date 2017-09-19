@@ -11,19 +11,23 @@
 
 #define _MAX_PIPE_NUM_  16
 using namespace std;
+
 //指令参数
 struct CommandParams{
     string infile;//标准输入重定向
     string outfile;//标准输出重定向
     vector<string> v_argv;//参数列表
 };
+
 //拆分字符串的函数
 void splitString(const char *Src,char delim,vector<string> &vsplit);
+
 //解析指令的参数
 void parseCommand(const char *srccmd,vector<CommandParams> &v_params)
 {
     string srctmp = srccmd;
     vector<string> vstr_by_pipe;
+	
     //按管道符号进行拆分
     if(srctmp.find('|') != string::npos)
     {
@@ -33,12 +37,14 @@ void parseCommand(const char *srccmd,vector<CommandParams> &v_params)
     {
         vstr_by_pipe.push_back(srctmp);//如果没有管道符号
     }
+	
     //对管道拆分后的vector进行遍历拆分
     for(int i = 0 ; i < vstr_by_pipe.size();i ++)
     {
         CommandParams OneParams;
         string subCmd = vstr_by_pipe[i];//管道拆分后的子指令
         string OrgCmd = subCmd;//去掉重定向后的指令
+		
         //先判断重定向符号和重定向的文件
         if(subCmd.find('<') != string::npos)
         {
@@ -47,6 +53,7 @@ void parseCommand(const char *srccmd,vector<CommandParams> &v_params)
             OneParams.infile = vdupCmd[1];//固定第二个元素是重定向的文件
             OrgCmd = vdupCmd[0];//去掉重定向后的指令
         }
+		
         //先判断重定向符号和重定向的文件
         if(subCmd.find('>') != string::npos)
         {
@@ -56,6 +63,7 @@ void parseCommand(const char *srccmd,vector<CommandParams> &v_params)
             OrgCmd = vdupCmd[0];//去掉重定向后的指令
         }
         cout<<"OrgCmd:"<<OrgCmd<<",infile:"<<OneParams.infile<<",outfile"<<OneParams.outfile<<endl;
+		
         //对OrgCmd进行按空格拆分
         if(OrgCmd.find(' ') != string::npos)
         {
@@ -70,6 +78,7 @@ void parseCommand(const char *srccmd,vector<CommandParams> &v_params)
         v_params.push_back(OneParams);//放到数组当中
     }
 }
+
 //执行指令的函数
 void execCommand(vector<CommandParams> &v_params)
 {
@@ -85,7 +94,8 @@ void execCommand(vector<CommandParams> &v_params)
         cout << endl;
 
     }
-    //第一个问题,有多少个管道?v_params.size() -1
+	
+    //计算需要的管道
     int pipenum = v_params.size() -1;
     int pipefd[_MAX_PIPE_NUM_][2];
     int j =0;
@@ -93,11 +103,13 @@ void execCommand(vector<CommandParams> &v_params)
     {
         pipe(pipefd[i]);//初始化管道
     }
-    //第二个问题,需要创建多少个子进程?v_params.size()
+	
+    //计算需要的线程
     for(i = 0; i < pipenum+1 ; i ++)
     {
         if(fork() == 0) break;//创建n个子进程
     }
+	
     //用管道进行数据传递 i-1的输出传到管道的写端 传给 i 的输入是从管道的读端来
     //子进程的逻辑分三块
     if(i < pipenum +1)
@@ -148,6 +160,7 @@ void execCommand(vector<CommandParams> &v_params)
             dup2(outfd,STDOUT_FILENO);//读标准输入重定向为读文件
             close(outfd);
         }
+		
         //执行指令
         //生成参数列表
         char *r_argv[10];
@@ -155,7 +168,7 @@ void execCommand(vector<CommandParams> &v_params)
         {
             r_argv[j] = (char*)v_params[i].v_argv[j].c_str();
         }
-        r_argv[j] = NULL;//别忘了哨兵
+        r_argv[j] = NULL;//哨兵
         execvp(v_params[i].v_argv[0].c_str(),r_argv);//执行子进程
     }
     else
@@ -171,6 +184,7 @@ void execCommand(vector<CommandParams> &v_params)
         v_params.clear();
     }
 }
+
 int main(void)
 {
     char buf[256];
