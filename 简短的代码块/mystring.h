@@ -1,3 +1,6 @@
+#pragma once
+
+//封装string类
 class Cmystring
 {
 	friend ostream& operator<<(ostream &out, const Cmystring& s);
