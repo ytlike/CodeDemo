@@ -1,0 +1,9 @@
+[MinSec]1
+[MaxSec]2
+[MinRestSec]3
+[MaxRestSec]4
+[MaxCustSingleLine]5
+[MaxLines]6
+[MaxSeqLen]7
+[MinTimeLen]8
+[MaxTimeLen]9
